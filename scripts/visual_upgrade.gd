@@ -11,6 +11,7 @@ var last_chaos := -1
 
 var colors := [Color("ff354f"), Color("1788ff"), Color("ffbf19"), Color("50df3d"), Color("a93cff"), Color("ff7a22")]
 var piece_textures: Array[Texture2D] = []
+var special_textures: Dictionary = {}
 
 func _ready() -> void:
 	call_deferred("setup")
@@ -38,6 +39,12 @@ func load_piece_art() -> void:
 		load("res://assets/pieces/purple.svg"),
 		load("res://assets/pieces/orange.svg")
 	]
+	special_textures = {
+		1: load("res://assets/pieces/rocket_h.svg"),
+		2: load("res://assets/pieces/rocket_v.svg"),
+		3: load("res://assets/pieces/bomb.svg"),
+		4: load("res://assets/pieces/core.svg")
+	}
 
 func make_lab_background() -> void:
 	var bg := GradientTexture2D.new()
@@ -65,14 +72,6 @@ func make_lab_background() -> void:
 		pipe.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		game.add_child(pipe)
 		game.move_child(pipe, 2)
-	for i in 12:
-		var glow := ColorRect.new()
-		glow.color = Color(0.28, 1.0, 0.18, 0.10)
-		glow.position = Vector2(20 + (i * 83) % 680, 100 + (i * 137) % 800)
-		glow.size = Vector2(18 + (i % 3) * 8, 18 + (i % 3) * 8)
-		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		game.add_child(glow)
-		game.move_child(glow, 3)
 
 func upgrade_board_panel() -> void:
 	if board_grid == null: return
@@ -119,7 +118,6 @@ func build_reference_hud() -> void:
 	goal_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_panel.add_theme_stylebox_override("panel", make_panel(Color("19325e"), Color("72aaff"), 24, 10))
 	layer.add_child(goal_panel)
-
 	var goal_box := VBoxContainer.new()
 	goal_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	goal_box.add_theme_constant_override("separation", 2)
@@ -276,41 +274,32 @@ func upgrade_tiles() -> void:
 			if t < 0 or t >= colors.size(): continue
 			var special: int = int(specials[y][x])
 			var s := StyleBoxFlat.new()
-			s.bg_color = colors[t].darkened(0.13)
-			s.corner_radius_top_left = 22
-			s.corner_radius_top_right = 22
-			s.corner_radius_bottom_left = 22
-			s.corner_radius_bottom_right = 22
+			s.bg_color = Color("132444")
+			s.corner_radius_top_left = 18
+			s.corner_radius_top_right = 18
+			s.corner_radius_bottom_left = 18
+			s.corner_radius_bottom_right = 18
 			s.set_border_width_all(2)
-			s.border_color = colors[t].lightened(0.32)
-			s.shadow_color = Color(0, 0, 0, 0.50)
+			s.border_color = colors[t].darkened(0.18)
+			s.shadow_color = Color(0, 0, 0, 0.52)
 			s.shadow_size = 6
 			s.shadow_offset = Vector2(0, 5)
 			if special != 0:
-				s.bg_color = colors[t].lightened(0.02)
-				s.set_border_width_all(5)
-				s.border_color = Color("fff0a0")
-				s.shadow_color = Color(1.0, 0.65, 0.12, 0.55)
+				s.bg_color = Color("1c2947")
+				s.set_border_width_all(4)
+				s.border_color = Color("ffe58a")
+				s.shadow_color = Color(1.0, 0.65, 0.12, 0.58)
 				s.shadow_size = 10
 			b.add_theme_stylebox_override("normal", s)
 			var hover: StyleBoxFlat = s.duplicate()
-			hover.bg_color = s.bg_color.lightened(0.10)
+			hover.bg_color = s.bg_color.lightened(0.08)
 			b.add_theme_stylebox_override("hover", hover)
 			var pressed: StyleBoxFlat = s.duplicate()
 			pressed.bg_color = s.bg_color.darkened(0.12)
 			b.add_theme_stylebox_override("pressed", pressed)
-			b.icon = piece_textures[t]
 			b.expand_icon = true
 			if special == 0:
-				b.text = ""
+				b.icon = piece_textures[t]
 			else:
-				match special:
-					1: b.text = "↔"
-					2: b.text = "↕"
-					3: b.text = "✹"
-					4: b.text = "◎"
-			b.add_theme_color_override("font_color", Color.WHITE)
-			b.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
-			b.add_theme_constant_override("shadow_offset_x", 2)
-			b.add_theme_constant_override("shadow_offset_y", 3)
-			b.add_theme_font_size_override("font_size", 26)
+				b.icon = special_textures.get(special, piece_textures[t])
+			b.text = ""
