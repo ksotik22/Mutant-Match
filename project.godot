@@ -10,6 +10,7 @@ config/icon="res://icon.svg"
 [autoload]
 Juice="*res://scripts/juice.gd"
 VisualUpgrade="*res://scripts/visual_upgrade.gd"
+Music="*res://scripts/music.gd"
 
 [display]
 window/size/viewport_width=720
