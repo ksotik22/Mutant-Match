@@ -5,7 +5,7 @@ var last_status := ""
 var last_score := 0
 var audio_players: Array[AudioStreamPlayer] = []
 var audio_index: int = 0
-var sample_rate := 22050.0
+var sample_rate := 44100.0
 var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -16,9 +16,9 @@ func setup() -> void:
 	await get_tree().process_frame
 	game = get_tree().current_scene as Control
 	if game == null: return
-	for i in 8:
+	for i in 10:
 		var p := AudioStreamPlayer.new()
-		p.volume_db = -3.0
+		p.volume_db = -5.0
 		game.add_child(p)
 		audio_players.append(p)
 	await get_tree().process_frame
@@ -37,14 +37,14 @@ func connect_buttons() -> void:
 func piece_press(button: Button) -> void:
 	var tw := create_tween()
 	tw.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(button, "scale", Vector2(0.88, 0.88), 0.055)
-	play_pop(0)
+	tw.tween_property(button, "scale", Vector2(0.90, 0.90), 0.05)
+	play_soft_click()
 
 func piece_release(button: Button) -> void:
 	var tw := create_tween()
 	tw.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(button, "scale", Vector2(1.08, 1.08), 0.055)
-	tw.tween_property(button, "scale", Vector2.ONE, 0.085)
+	tw.tween_property(button, "scale", Vector2(1.06, 1.06), 0.05)
+	tw.tween_property(button, "scale", Vector2.ONE, 0.08)
 
 func _process(_delta: float) -> void:
 	if game == null: return
@@ -60,16 +60,16 @@ func on_status(text: String) -> void:
 	if "КАСКАД" in text:
 		cascade_fx(cascade_number(text))
 	elif "ЦЕПНАЯ" in text:
-		blast_fx(Color("fff08a"), 0.20)
-		play_chain_burst()
+		blast_fx(Color("fff08a"), 0.18)
+		play_combo_burst()
 	elif "РАКЕТА" in text:
-		blast_fx(Color("7ee8ff"), 0.13)
+		blast_fx(Color("7ee8ff"), 0.12)
 		play_rocket()
 	elif "БОМБА" in text:
-		blast_fx(Color("ff8a65"), 0.22)
+		blast_fx(Color("ff8a65"), 0.20)
 		play_bomb()
 	elif "ЯДРО" in text:
-		blast_fx(Color("d79cff"), 0.25)
+		blast_fx(Color("d79cff"), 0.22)
 		play_core()
 	elif "ПОБЕДА" in text:
 		win_fx()
@@ -85,45 +85,52 @@ func cascade_number(text: String) -> int:
 	return maxi(2, int(number))
 
 func cascade_fx(chain: int) -> void:
-	play_pop(chain)
-	pop_status(1.0 + minf(float(chain) * 0.075, 0.40))
-	if chain >= 3: blast_fx(Color("ffffff"), 0.055 + float(chain) * 0.012)
-	if chain >= 5: play_jackpot(chain)
+	play_match_pop(chain)
+	pop_status(1.0 + minf(float(chain) * 0.07, 0.36))
+	if chain >= 3: blast_fx(Color("ffffff"), 0.045 + float(chain) * 0.01)
+	if chain >= 5: play_reward_sparkle(chain)
 
-func play_pop(chain: int) -> void:
-	# Bright, soft original match sound. Each cascade climbs a musical step.
-	var notes := [392.0, 440.0, 493.88, 587.33, 659.25, 783.99, 880.0, 987.77]
-	var idx: int = mini(chain, notes.size() - 1)
-	var base: float = notes[idx]
-	play_layered_tone(base, 0.070, 0.15, 0.55)
-	play_layered_tone(base * 2.0, 0.038, 0.055, 0.25)
+func play_soft_click() -> void:
+	# A tiny muted tactile tick instead of a synth beep.
+	play_percussive(0.032, 0.055, 0.72, 1700.0, 0.0)
 
-func play_chain_burst() -> void:
-	play_layered_tone(523.25, 0.10, 0.14, 0.45)
-	play_layered_tone(783.99, 0.12, 0.10, 0.25)
-	play_noise_burst(0.075, 0.055, 0.80)
+func play_match_pop(chain: int) -> void:
+	# Casual match-3 pop: soft impact + airy bubble + subtle pitched sparkle.
+	var step: float = minf(float(chain), 7.0)
+	var pitch: float = 510.0 * pow(1.05946, step * 1.6)
+	play_percussive(0.075, 0.12, 0.32, 950.0 + step * 90.0, 0.18)
+	play_bubble(pitch, 0.085, 0.095)
+	if chain >= 2: play_chime(pitch * 1.48, 0.105, 0.038)
+
+func play_combo_burst() -> void:
+	play_percussive(0.11, 0.14, 0.42, 1250.0, 0.16)
+	play_bubble(720.0, 0.12, 0.10)
+	play_chime(1080.0, 0.16, 0.055)
 
 func play_rocket() -> void:
-	play_sweep(300.0, 1250.0, 0.18, 0.16)
-	play_noise_burst(0.13, 0.075, 0.55)
-	play_layered_tone(880.0, 0.055, 0.08, 0.25)
+	# Airy launch + paper-like snap, not an electronic laser.
+	play_whoosh(0.22, 0.13, true)
+	play_percussive(0.055, 0.12, 0.55, 2200.0, 0.05)
+	play_chime(1180.0, 0.11, 0.035)
 
 func play_bomb() -> void:
-	play_sweep(145.0, 58.0, 0.24, 0.27)
-	play_noise_burst(0.16, 0.13, 0.30)
-	play_layered_tone(82.4, 0.25, 0.16, 0.65)
+	# Rounded cartoon thump with a short debris puff.
+	play_thump(0.26, 0.22)
+	play_percussive(0.18, 0.16, 0.20, 520.0, 0.0)
+	play_whoosh(0.16, 0.07, false)
 
 func play_core() -> void:
-	play_sweep(360.0, 1350.0, 0.25, 0.12)
-	play_layered_tone(659.25, 0.20, 0.12, 0.35)
-	play_layered_tone(987.77, 0.16, 0.08, 0.25)
-	play_layered_tone(1318.5, 0.12, 0.055, 0.20)
+	# Magical reward-like shimmer rather than a sci-fi oscillator.
+	play_whoosh(0.24, 0.08, true)
+	play_chime(659.25, 0.28, 0.06)
+	play_chime(987.77, 0.24, 0.05)
+	play_chime(1318.5, 0.20, 0.04)
 
-func play_jackpot(chain: int) -> void:
-	var boost: float = minf(float(chain - 5) * 25.0, 100.0)
-	play_layered_tone(1046.5 + boost, 0.16, 0.10, 0.25)
-	play_layered_tone(1318.5 + boost, 0.18, 0.08, 0.20)
-	play_layered_tone(1568.0 + boost, 0.20, 0.065, 0.18)
+func play_reward_sparkle(chain: int) -> void:
+	var lift: float = minf(float(chain - 5) * 30.0, 120.0)
+	play_chime(1046.5 + lift, 0.18, 0.045)
+	play_chime(1318.5 + lift, 0.22, 0.038)
+	play_chime(1568.0 + lift, 0.25, 0.030)
 
 func pop_status(amount: float) -> void:
 	var label = game.get("status_label")
@@ -166,11 +173,12 @@ func shake_board() -> void:
 	tw.tween_property(grid, "position", original, 0.035)
 
 func win_fx() -> void:
-	blast_fx(Color("fff0a8"), 0.32)
-	play_layered_tone(523.25, 0.30, 0.11, 0.20)
-	play_layered_tone(659.25, 0.32, 0.09, 0.20)
-	play_layered_tone(783.99, 0.34, 0.08, 0.20)
-	play_layered_tone(1046.5, 0.36, 0.065, 0.20)
+	blast_fx(Color("fff0a8"), 0.30)
+	play_whoosh(0.28, 0.08, true)
+	play_chime(523.25, 0.34, 0.055)
+	play_chime(659.25, 0.36, 0.050)
+	play_chime(783.99, 0.40, 0.045)
+	play_chime(1046.5, 0.44, 0.038)
 	var label = game.get("status_label")
 	if label != null:
 		label.add_theme_font_size_override("font_size", 28)
@@ -181,55 +189,82 @@ func next_player() -> AudioStreamPlayer:
 	audio_index = (audio_index + 1) % audio_players.size()
 	return p
 
-func play_layered_tone(freq: float, duration: float, volume: float, softness: float) -> void:
+func play_percussive(duration: float, volume: float, brightness: float, body_freq: float, tonal: float) -> void:
 	if audio_players.is_empty(): return
-	var frames: int = int(sample_rate * duration)
+	var frames := int(sample_rate * duration)
 	var data := PackedByteArray()
 	data.resize(frames * 2)
+	var low: float = 0.0
 	for i in frames:
-		var t: float = float(i) / sample_rate
-		var k: float = float(i) / float(frames)
-		var attack: float = minf(1.0, float(i) / maxf(1.0, sample_rate * 0.006))
-		var env: float = attack * pow(1.0 - k, 1.4)
-		var fundamental: float = sin(TAU * freq * t)
-		var harmonic: float = sin(TAU * freq * 2.01 * t) * softness
-		var shimmer: float = sin(TAU * freq * 3.0 * t) * softness * 0.16
-		var v: float = (fundamental + harmonic + shimmer) / (1.0 + softness) * env * volume
-		write_sample(data, i, v)
+		var k := float(i) / float(frames)
+		var raw := rng.randf_range(-1.0, 1.0)
+		low = lerpf(low, raw, clampf(brightness, 0.05, 0.95))
+		var env := pow(1.0 - k, 4.0)
+		var body := sin(TAU * body_freq * float(i) / sample_rate) * tonal
+		write_sample(data, i, (low * (1.0-tonal) + body) * env * volume)
 	play_pcm(data)
 
-func play_sweep(from_freq: float, to_freq: float, duration: float, volume: float) -> void:
+func play_bubble(freq: float, duration: float, volume: float) -> void:
 	if audio_players.is_empty(): return
-	var frames: int = int(sample_rate * duration)
+	var frames := int(sample_rate * duration)
 	var data := PackedByteArray()
 	data.resize(frames * 2)
-	var phase: float = 0.0
+	var phase := 0.0
 	for i in frames:
-		var k: float = float(i) / float(frames)
-		var freq: float = lerpf(from_freq, to_freq, smoothstep(0.0, 1.0, k))
+		var k := float(i) / float(frames)
+		var f := freq * (1.0 + 0.42 * pow(1.0-k, 2.0))
+		phase += TAU * f / sample_rate
+		var env := sin(PI * minf(k * 2.8, 1.0)) * pow(1.0-k, 2.4)
+		var rounded := sin(phase) + sin(phase * 0.5) * 0.18
+		write_sample(data, i, rounded * env * volume)
+	play_pcm(data)
+
+func play_chime(freq: float, duration: float, volume: float) -> void:
+	if audio_players.is_empty(): return
+	var frames := int(sample_rate * duration)
+	var data := PackedByteArray()
+	data.resize(frames * 2)
+	for i in frames:
+		var t := float(i) / sample_rate
+		var k := float(i) / float(frames)
+		var attack := minf(1.0, float(i) / (sample_rate * 0.004))
+		var env := attack * pow(1.0-k, 2.2)
+		var v := sin(TAU*freq*t) * 0.72 + sin(TAU*freq*2.71*t) * 0.18 + sin(TAU*freq*4.05*t) * 0.10
+		write_sample(data, i, v * env * volume)
+	play_pcm(data)
+
+func play_thump(duration: float, volume: float) -> void:
+	if audio_players.is_empty(): return
+	var frames := int(sample_rate * duration)
+	var data := PackedByteArray()
+	data.resize(frames * 2)
+	var phase := 0.0
+	for i in frames:
+		var k := float(i) / float(frames)
+		var freq := lerpf(145.0, 48.0, sqrt(k))
 		phase += TAU * freq / sample_rate
-		var env: float = sin(PI * clampf(k * 1.15, 0.0, 1.0)) * pow(1.0-k, 0.35)
-		var v: float = (sin(phase) + sin(phase*2.0)*0.22) * env * volume
+		var env := pow(1.0-k, 2.5)
+		var v := (sin(phase) + sin(phase*0.5)*0.28) * env * volume
 		write_sample(data, i, v)
 	play_pcm(data)
 
-func play_noise_burst(duration: float, volume: float, brightness: float) -> void:
+func play_whoosh(duration: float, volume: float, rising: bool) -> void:
 	if audio_players.is_empty(): return
-	var frames: int = int(sample_rate * duration)
+	var frames := int(sample_rate * duration)
 	var data := PackedByteArray()
 	data.resize(frames * 2)
-	var previous: float = 0.0
+	var smooth_noise: float = 0.0
 	for i in frames:
-		var k: float = float(i) / float(frames)
-		var raw: float = rng.randf_range(-1.0, 1.0)
-		var filtered: float = lerpf(previous, raw, brightness)
-		previous = filtered
-		var env: float = pow(1.0-k, 2.2)
-		write_sample(data, i, filtered * env * volume)
+		var k := float(i) / float(frames)
+		var raw := rng.randf_range(-1.0, 1.0)
+		var response := lerpf(0.08, 0.72, k if rising else 1.0-k)
+		smooth_noise = lerpf(smooth_noise, raw, response)
+		var env := sin(PI * k) * (1.0-k*0.25)
+		write_sample(data, i, smooth_noise * env * volume)
 	play_pcm(data)
 
 func write_sample(data: PackedByteArray, i: int, value: float) -> void:
-	var s: int = int(clampf(value, -1.0, 1.0) * 32767.0)
+	var s := int(clampf(value, -1.0, 1.0) * 32767.0)
 	data[i*2] = s & 255
 	data[i*2+1] = (s >> 8) & 255
 
