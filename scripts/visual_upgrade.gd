@@ -300,7 +300,6 @@ func upgrade_tiles() -> void:
 			pressed.bg_color = s.bg_color.darkened(0.09)
 			b.add_theme_stylebox_override("pressed", pressed)
 			b.expand_icon = true
-			b.icon_max_width = 50
 			if special == 0:
 				b.icon = piece_textures[t]
 			else:
