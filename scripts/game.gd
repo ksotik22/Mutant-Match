@@ -20,10 +20,7 @@ var score_label: Label
 var goal_label: Label
 var status_label: Label
 
-var colors := [
-	Color("ff5b70"), Color("4da6ff"), Color("ffd447"),
-	Color("63d66b"), Color("a96cff"), Color("ff914d")
-]
+var colors := [Color("ff5b70"), Color("4da6ff"), Color("ffd447"), Color("63d66b"), Color("a96cff"), Color("ff914d")]
 var symbols := ["◆", "●", "★", "■", "✦", "⬟"]
 
 func _ready() -> void:
@@ -36,7 +33,6 @@ func build_ui() -> void:
 	bg.color = Color("152449")
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
-
 	var root := VBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_CENTER)
 	root.position = Vector2(-305, -430)
@@ -44,21 +40,18 @@ func build_ui() -> void:
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_theme_constant_override("separation", 16)
 	add_child(root)
-
 	var title := Label.new()
 	title.text = "MUTANT MATCH"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 38)
 	title.add_theme_color_override("font_color", Color("fff4d6"))
 	root.add_child(title)
-
 	var subtitle := Label.new()
 	subtitle.text = "Собирай энерго-ядра и запускай цепные реакции"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 17)
 	subtitle.add_theme_color_override("font_color", Color("b9d5ff"))
 	root.add_child(subtitle)
-
 	var top := HBoxContainer.new()
 	top.alignment = BoxContainer.ALIGNMENT_CENTER
 	top.add_theme_constant_override("separation", 12)
@@ -66,7 +59,6 @@ func build_ui() -> void:
 	moves_label = make_stat(top, "ХОДЫ\n25")
 	score_label = make_stat(top, "СЧЁТ\n0")
 	goal_label = make_stat(top, "ЦЕЛЬ\n1200")
-
 	var panel := PanelContainer.new()
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color("263b72")
@@ -80,20 +72,17 @@ func build_ui() -> void:
 	panel_style.content_margin_bottom = 14
 	panel.add_theme_stylebox_override("panel", panel_style)
 	root.add_child(panel)
-
 	board_grid = GridContainer.new()
 	board_grid.columns = COLS
 	board_grid.add_theme_constant_override("h_separation", int(GAP))
 	board_grid.add_theme_constant_override("v_separation", int(GAP))
 	panel.add_child(board_grid)
-
 	status_label = Label.new()
 	status_label.text = "Поменяй соседние фишки местами"
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status_label.add_theme_font_size_override("font_size", 19)
 	status_label.add_theme_color_override("font_color", Color("ffffff"))
 	root.add_child(status_label)
-
 	var restart := Button.new()
 	restart.text = "НОВАЯ ИГРА"
 	restart.custom_minimum_size = Vector2(220, 52)
@@ -114,10 +103,7 @@ func make_stat(parent: Node, text_value: String) -> Label:
 	style.corner_radius_top_right = 16
 	style.corner_radius_bottom_left = 16
 	style.corner_radius_bottom_right = 16
-	style.border_width_left = 2
-	style.border_width_top = 2
-	style.border_width_right = 2
-	style.border_width_bottom = 2
+	style.set_border_width_all(2)
 	style.border_color = Color("5476b8")
 	label.add_theme_stylebox_override("normal", style)
 	parent.add_child(label)
@@ -132,7 +118,7 @@ func new_game() -> void:
 	for y in ROWS:
 		var row: Array = []
 		for x in COLS:
-			var t := randi_range(0, TYPES - 1)
+			var t: int = randi_range(0, TYPES - 1)
 			while (x >= 2 and row[x - 1] == t and row[x - 2] == t) or (y >= 2 and board[y - 1][x] == t and board[y - 2][x] == t):
 				t = randi_range(0, TYPES - 1)
 			row.append(t)
@@ -142,8 +128,7 @@ func new_game() -> void:
 	status_label.text = "Собери 3 или больше одинаковых"
 
 func build_cells() -> void:
-	for child in board_grid.get_children():
-		child.queue_free()
+	for child in board_grid.get_children(): child.queue_free()
 	cells.clear()
 	for y in ROWS:
 		var cell_row: Array = []
@@ -170,19 +155,15 @@ func refresh_board() -> void:
 			style.corner_radius_top_right = 16
 			style.corner_radius_bottom_left = 16
 			style.corner_radius_bottom_right = 16
-			style.border_width_left = 4 if selected == Vector2i(x,y) else 2
-			style.border_width_top = 4 if selected == Vector2i(x,y) else 2
-			style.border_width_right = 4 if selected == Vector2i(x,y) else 2
-			style.border_width_bottom = 4 if selected == Vector2i(x,y) else 2
+			style.set_border_width_all(4 if selected == Vector2i(x,y) else 2)
 			style.border_color = Color.WHITE if selected == Vector2i(x,y) else colors[t].lightened(0.25)
 			b.add_theme_stylebox_override("normal", style)
-			var hover := style.duplicate()
+			var hover: StyleBoxFlat = style.duplicate()
 			hover.bg_color = colors[t].lightened(0.12)
 			b.add_theme_stylebox_override("hover", hover)
 
 func on_cell_pressed(pos: Vector2i) -> void:
-	if busy or moves <= 0:
-		return
+	if busy or moves <= 0: return
 	if selected.x < 0:
 		selected = pos
 		refresh_board()
@@ -191,18 +172,18 @@ func on_cell_pressed(pos: Vector2i) -> void:
 		selected = Vector2i(-1, -1)
 		refresh_board()
 		return
-	var dist := abs(selected.x - pos.x) + abs(selected.y - pos.y)
+	var dist: int = absi(selected.x - pos.x) + absi(selected.y - pos.y)
 	if dist != 1:
 		selected = pos
 		refresh_board()
 		return
 	busy = true
-	var a := selected
+	var a: Vector2i = selected
 	selected = Vector2i(-1, -1)
 	swap_cells(a, pos)
 	refresh_board()
 	await get_tree().create_timer(0.12).timeout
-	var matches := find_matches()
+	var matches: Array = find_matches()
 	if matches.is_empty():
 		swap_cells(a, pos)
 		status_label.text = "Нет комбинации — ход не потрачен"
@@ -212,30 +193,27 @@ func on_cell_pressed(pos: Vector2i) -> void:
 	moves -= 1
 	await resolve_cascades(matches)
 	update_hud()
-	if score >= target:
-		status_label.text = "ПОБЕДА! Цель выполнена ✦"
-	elif moves <= 0:
-		status_label.text = "Ходы закончились. Попробуй ещё раз"
-	else:
-		status_label.text = "Отлично! Ищи следующую цепочку"
+	if score >= target: status_label.text = "ПОБЕДА! Цель выполнена ✦"
+	elif moves <= 0: status_label.text = "Ходы закончились. Попробуй ещё раз"
+	else: status_label.text = "Отлично! Ищи следующую цепочку"
 	busy = false
 
 func swap_cells(a: Vector2i, b: Vector2i) -> void:
-	var temp = board[a.y][a.x]
+	var temp: int = board[a.y][a.x]
 	board[a.y][a.x] = board[b.y][b.x]
 	board[b.y][b.x] = temp
 
 func find_matches() -> Array:
-	var found := {}
+	var found: Dictionary = {}
 	for y in ROWS:
-		var run_start := 0
+		var run_start: int = 0
 		for x in range(1, COLS + 1):
 			if x == COLS or board[y][x] != board[y][run_start]:
 				if x - run_start >= 3:
 					for mx in range(run_start, x): found[Vector2i(mx,y)] = true
 				run_start = x
 	for x in COLS:
-		var run_start := 0
+		var run_start: int = 0
 		for y in range(1, ROWS + 1):
 			if y == ROWS or board[y][x] != board[run_start][x]:
 				if y - run_start >= 3:
@@ -244,13 +222,12 @@ func find_matches() -> Array:
 	return found.keys()
 
 func resolve_cascades(matches: Array) -> void:
-	var chain := 1
-	var current := matches
+	var chain: int = 1
+	var current: Array = matches
 	while not current.is_empty():
 		score += current.size() * 25 * chain
 		status_label.text = "КАСКАД x%d   +%d" % [chain, current.size() * 25 * chain]
-		for p in current:
-			board[p.y][p.x] = -1
+		for p in current: board[p.y][p.x] = -1
 		refresh_removed()
 		await get_tree().create_timer(0.18).timeout
 		collapse_board()
@@ -278,15 +255,13 @@ func collapse_board() -> void:
 	for x in COLS:
 		var values: Array = []
 		for y in range(ROWS - 1, -1, -1):
-			if board[y][x] != -1:
-				values.append(board[y][x])
-		var index := 0
+			if board[y][x] != -1: values.append(board[y][x])
+		var index: int = 0
 		for y in range(ROWS - 1, -1, -1):
 			if index < values.size():
 				board[y][x] = values[index]
 				index += 1
-			else:
-				board[y][x] = randi_range(0, TYPES - 1)
+			else: board[y][x] = randi_range(0, TYPES - 1)
 
 func update_hud() -> void:
 	moves_label.text = "ХОДЫ\n%d" % moves
