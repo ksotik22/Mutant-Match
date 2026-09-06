@@ -1,16 +1,16 @@
 extends Node
 
 const LEVELS := [
-	{"moves": 30, "target": 600},
-	{"moves": 30, "target": 700},
-	{"moves": 29, "target": 800},
-	{"moves": 29, "target": 900},
-	{"moves": 28, "target": 1000},
+	{"moves": 28, "target": 900},
 	{"moves": 28, "target": 1100},
-	{"moves": 27, "target": 1200},
 	{"moves": 27, "target": 1300},
-	{"moves": 26, "target": 1400},
-	{"moves": 26, "target": 1500}
+	{"moves": 27, "target": 1500},
+	{"moves": 26, "target": 1700},
+	{"moves": 26, "target": 1900},
+	{"moves": 25, "target": 2100},
+	{"moves": 25, "target": 2250},
+	{"moves": 24, "target": 2400},
+	{"moves": 23, "target": 2550}
 ]
 
 var game: Control
