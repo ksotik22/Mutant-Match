@@ -1,16 +1,16 @@
 extends Node
 
 const LEVELS := [
-	{"moves": 28, "target": 1400},
-	{"moves": 28, "target": 1700},
-	{"moves": 27, "target": 2000},
-	{"moves": 27, "target": 2300},
-	{"moves": 26, "target": 2700},
-	{"moves": 26, "target": 3100},
-	{"moves": 25, "target": 3500},
-	{"moves": 25, "target": 3900},
-	{"moves": 24, "target": 4400},
-	{"moves": 23, "target": 5000}
+	{"moves": 27, "target": 1800, "crates": 2},
+	{"moves": 27, "target": 2200, "crates": 3},
+	{"moves": 26, "target": 2600, "crates": 4},
+	{"moves": 26, "target": 3000, "crates": 5},
+	{"moves": 25, "target": 3400, "crates": 6},
+	{"moves": 25, "target": 3900, "crates": 7},
+	{"moves": 24, "target": 4400, "crates": 8},
+	{"moves": 23, "target": 4900, "crates": 9},
+	{"moves": 22, "target": 5500, "crates": 10},
+	{"moves": 21, "target": 6200, "crates": 12}
 ]
 
 var game: Control
@@ -34,11 +34,11 @@ func setup() -> void:
 func build_level_label() -> void:
 	info_label = Label.new()
 	info_label.name = "LevelInfo"
-	info_label.position = Vector2(190, 158)
-	info_label.size = Vector2(340, 34)
+	info_label.position = Vector2(165, 158)
+	info_label.size = Vector2(390, 34)
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	info_label.add_theme_font_size_override("font_size", 20)
+	info_label.add_theme_font_size_override("font_size", 19)
 	info_label.add_theme_color_override("font_color", Color.WHITE)
 	info_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.15, 0.25, 0.8))
 	info_label.add_theme_constant_override("shadow_offset_x", 2)
@@ -64,7 +64,11 @@ func start_level(index: int) -> void:
 	game.set("busy", false)
 	game.call("update_hud")
 
-	info_label.text = "УРОВЕНЬ %d   •   ЦЕЛЬ %d" % [current_level + 1, int(data["target"])]
+	var crates = get_node_or_null("/root/Crates")
+	if crates != null:
+		await crates.reset_for_level(int(data["crates"]))
+
+	info_label.text = "УРОВЕНЬ %d  •  %d ОЧКОВ  •  КОРОБКИ %d" % [current_level + 1, int(data["target"]), int(data["crates"])]
 
 func _process(_delta: float) -> void:
 	if game == null or finished:
@@ -72,7 +76,11 @@ func _process(_delta: float) -> void:
 	var score := int(game.get("score"))
 	var target := int(game.get("target"))
 	var moves := int(game.get("moves"))
-	if score >= target:
+	var crates_left := 0
+	var crates = get_node_or_null("/root/Crates")
+	if crates != null:
+		crates_left = int(crates.remaining)
+	if score >= target and crates_left <= 0:
 		finished = true
 		game.set("busy", true)
 		show_result(true)
@@ -96,13 +104,13 @@ func show_result(win: bool) -> void:
 
 	var card := PanelContainer.new()
 	card.position = Vector2(95, 285)
-	card.size = Vector2(530, 330)
+	card.size = Vector2(530, 350)
 	card.add_theme_stylebox_override("panel", make_card())
 	result_layer.add_child(card)
 
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 18)
+	box.add_theme_constant_override("separation", 16)
 	card.add_child(box)
 
 	var title := Label.new()
@@ -112,10 +120,14 @@ func show_result(win: bool) -> void:
 	title.add_theme_color_override("font_color", Color("fff2c7"))
 	box.add_child(title)
 
+	var crates_left := 0
+	var crates = get_node_or_null("/root/Crates")
+	if crates != null:
+		crates_left = int(crates.remaining)
 	var score_label := Label.new()
-	score_label.text = "Счёт: %d / %d" % [int(game.get("score")), int(game.get("target"))]
+	score_label.text = "Очки: %d / %d   •   Коробки: %d" % [int(game.get("score")), int(game.get("target")), crates_left]
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	score_label.add_theme_font_size_override("font_size", 24)
+	score_label.add_theme_font_size_override("font_size", 22)
 	score_label.add_theme_color_override("font_color", Color.WHITE)
 	box.add_child(score_label)
 
