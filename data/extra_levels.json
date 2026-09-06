@@ -1,0 +1,22 @@
+[
+  {"moves":30,"target":3000,"crates":3},
+  {"moves":30,"target":3200,"crates":3},
+  {"moves":29,"target":3400,"crates":4},
+  {"moves":29,"target":3600,"crates":4},
+  {"moves":29,"target":3800,"crates":5},
+  {"moves":28,"target":4000,"crates":5},
+  {"moves":28,"target":4250,"crates":5},
+  {"moves":28,"target":4500,"crates":6},
+  {"moves":27,"target":4750,"crates":6},
+  {"moves":27,"target":5000,"crates":6},
+  {"moves":27,"target":5250,"crates":7},
+  {"moves":26,"target":5500,"crates":7},
+  {"moves":26,"target":5750,"crates":7},
+  {"moves":26,"target":6000,"crates":8},
+  {"moves":25,"target":6250,"crates":8},
+  {"moves":25,"target":6500,"crates":8},
+  {"moves":25,"target":6800,"crates":9},
+  {"moves":24,"target":7100,"crates":9},
+  {"moves":24,"target":7400,"crates":10},
+  {"moves":24,"target":7800,"crates":10}
+]
