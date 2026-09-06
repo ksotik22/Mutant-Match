@@ -32,6 +32,13 @@ func reward_for_level(level_number: int) -> int:
 func can_afford(price: int) -> bool:
 	return coins >= price
 
+func spend_coins(price: int) -> bool:
+	if price < 0 or coins < price:
+		return false
+	coins -= price
+	save_data()
+	return true
+
 func buy_booster(index: int, price: int, amount: int = 1) -> bool:
 	if index < 0 or index >= boosters.size():
 		return false
