@@ -7,6 +7,13 @@ var booster_counts := [3, 3, 3, 3]
 var booster_buttons: Array[Button] = []
 var paused := false
 
+const BOOSTER_ICONS := [
+	"res://assets/pieces/bomb.svg",
+	"res://assets/pieces/rocket_h.svg",
+	"res://assets/pieces/core.svg",
+	"res://assets/pieces/rocket_v.svg"
+]
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	call_deferred("setup")
@@ -19,6 +26,19 @@ func setup() -> void:
 		return
 	build_real_goal_panel()
 	build_working_boosters()
+	rename_chaos_meter()
+
+func rename_chaos_meter() -> void:
+	for node in get_all_children(game):
+		if node is Label and node.text == "Шкала хаоса":
+			node.text = "Прогресс уровня"
+
+func get_all_children(node: Node) -> Array:
+	var out: Array = []
+	for child in node.get_children():
+		out.append(child)
+		out.append_array(get_all_children(child))
+	return out
 
 func build_real_goal_panel() -> void:
 	var panel := PanelContainer.new()
@@ -70,10 +90,10 @@ func build_working_boosters() -> void:
 	row.add_theme_constant_override("separation", 10)
 	bar.add_child(row)
 
-	add_booster_button(row, "💣", 0, "Бомба")
-	add_booster_button(row, "↔", 1, "Ракета")
-	add_booster_button(row, "◎", 2, "Ядро")
-	add_booster_button(row, "✹", 3, "Взрыв")
+	add_booster_button(row, 0, "Бомба")
+	add_booster_button(row, 1, "Ракета")
+	add_booster_button(row, 2, "Ядро")
+	add_booster_button(row, 3, "Взрыв 3×3")
 
 	var pause := Button.new()
 	pause.text = "Ⅱ"
@@ -86,13 +106,16 @@ func build_working_boosters() -> void:
 	pause.pressed.connect(toggle_pause.bind(pause))
 	row.add_child(pause)
 
-func add_booster_button(parent: HBoxContainer, icon: String, index: int, tip: String) -> void:
+func add_booster_button(parent: HBoxContainer, index: int, tip: String) -> void:
 	var b := Button.new()
-	b.text = "%s\n%d" % [icon, booster_counts[index]]
+	b.text = "×%d" % booster_counts[index]
 	b.tooltip_text = tip
-	b.custom_minimum_size = Vector2(84, 72)
+	b.custom_minimum_size = Vector2(92, 72)
 	b.focus_mode = Control.FOCUS_NONE
-	b.add_theme_font_size_override("font_size", 22)
+	b.icon = load(BOOSTER_ICONS[index])
+	b.expand_icon = true
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.add_theme_font_size_override("font_size", 18)
 	b.add_theme_color_override("font_color", Color.WHITE)
 	b.add_theme_stylebox_override("normal", make_panel(Color("1687dc"), Color("f6c96e"), 28, 4))
 	b.pressed.connect(use_booster.bind(index))
@@ -109,8 +132,8 @@ func use_booster(index: int) -> void:
 	booster_counts[index] -= 1
 	update_booster_text(index)
 
-	var x := randi_range(0, int(game.get("COLS")) - 1) if game.get("COLS") != null else randi_range(0, 7)
-	var y := randi_range(0, int(game.get("ROWS")) - 1) if game.get("ROWS") != null else randi_range(0, 7)
+	var x := randi_range(0, 7)
+	var y := randi_range(0, 7)
 	var pos := Vector2i(x, y)
 
 	if index == 0:
@@ -140,9 +163,8 @@ func instant_blast(center: Vector2i) -> void:
 	game.set("busy", false)
 
 func update_booster_text(index: int) -> void:
-	var icons := ["💣", "↔", "◎", "✹"]
 	if index < booster_buttons.size():
-		booster_buttons[index].text = "%s\n%d" % [icons[index], booster_counts[index]]
+		booster_buttons[index].text = "×%d" % booster_counts[index]
 		booster_buttons[index].disabled = booster_counts[index] <= 0
 
 func toggle_pause(button: Button) -> void:
