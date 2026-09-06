@@ -18,6 +18,7 @@ Levels="*res://scripts/levels.gd"
 LevelMap="*res://scripts/level_map.gd"
 GameplayUIFix="*res://scripts/gameplay_ui_fix.gd"
 Music="*res://scripts/music.gd"
+StartScreen="*res://scripts/start_screen.gd"
 
 [display]
 window/size/viewport_width=720
