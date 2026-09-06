@@ -12,6 +12,7 @@ var finished := false
 var chapter_overlay: Control
 var result_overlay: Control
 var map_button_added := false
+var map_overlay_id: int = 0
 
 func _ready() -> void:
 	call_deferred("setup")
@@ -71,19 +72,36 @@ func update_main_map() -> void:
 	var overlay = level_map.get("overlay")
 	if overlay == null or not is_instance_valid(overlay):
 		map_button_added = false
+		map_overlay_id = 0
 		return
+
+	var current_overlay_id := int(overlay.get_instance_id())
+	if current_overlay_id != map_overlay_id:
+		map_overlay_id = current_overlay_id
+		map_button_added = false
+
 	for node in all_children(overlay):
 		if node is Label and "30 уровней" in node.text:
 			node.text = "50 уровней • монеты • магазин • новая глава"
+
+	var existing = overlay.get_node_or_null("ExtraLevelsButton")
+	if existing != null:
+		map_button_added = true
+		return
 	if map_button_added:
 		return
+
 	var button := Button.new()
 	button.name = "ExtraLevelsButton"
 	button.text = "НОВАЯ ГЛАВА 31–50"
-	button.position = Vector2(220, 866)
-	button.size = Vector2(280, 54)
-	button.z_index = 20
-	button.add_theme_font_size_override("font_size", 19)
+	button.position = Vector2(205, 856)
+	button.size = Vector2(310, 60)
+	button.z_index = 50
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_size_override("font_size", 20)
+	button.add_theme_stylebox_override("normal", make_button_style(Color("d97b32"), Color("ffe07a")))
+	button.add_theme_stylebox_override("hover", make_button_style(Color("ee9343"), Color("fff0aa")))
+	button.add_theme_stylebox_override("pressed", make_button_style(Color("bf6429"), Color.WHITE))
 	button.pressed.connect(show_chapter)
 	overlay.add_child(button)
 	map_button_added = true
