@@ -20,7 +20,21 @@ const LEVELS := [
 	{"moves": 25, "target": 4700, "crates": 9},
 	{"moves": 24, "target": 5600, "crates": 11},
 	{"moves": 23, "target": 6500, "crates": 13},
-	{"moves": 22, "target": 7600, "crates": 15}
+
+	# 20-27: a lighter new chapter after the difficult first campaign.
+	{"moves": 29, "target": 2500, "crates": 3},
+	{"moves": 29, "target": 2800, "crates": 4},
+	{"moves": 28, "target": 3100, "crates": 4},
+	{"moves": 28, "target": 3400, "crates": 5},
+	{"moves": 27, "target": 3700, "crates": 5},
+	{"moves": 27, "target": 4050, "crates": 6},
+	{"moves": 26, "target": 4400, "crates": 6},
+	{"moves": 26, "target": 4800, "crates": 7},
+
+	# 28-30: final challenge.
+	{"moves": 24, "target": 6200, "crates": 10},
+	{"moves": 23, "target": 7300, "crates": 12},
+	{"moves": 22, "target": 8600, "crates": 14}
 ]
 
 var game: Control
