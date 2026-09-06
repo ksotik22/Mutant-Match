@@ -3,11 +3,11 @@ extends Node
 var current_language := "ru"
 var button: Button
 var game: Control
-var refresh_timer := 0.0
 var language_layer: CanvasLayer
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	process_priority = 1000
 	call_deferred("setup")
 
 func setup() -> void:
@@ -49,11 +49,7 @@ func toggle_language() -> void:
 	current_language = "en" if current_language == "ru" else "ru"
 	apply_language()
 
-func _process(delta: float) -> void:
-	refresh_timer += delta
-	if refresh_timer < 0.15:
-		return
-	refresh_timer = 0.0
+func _process(_delta: float) -> void:
 	if game == null:
 		game = get_tree().current_scene as Control
 	if game != null:
@@ -93,6 +89,7 @@ func to_english(text: String) -> String:
 		"НАЗАД К КАРТЕ": "BACK TO MAP",
 		"НАЗАД К КАРТЕ УРОВНЕЙ": "BACK TO LEVEL MAP",
 		"Цели уровня": "Level goals",
+		"Ходы": "Moves",
 		"ПАУЗА": "PAUSE",
 		"Можно продолжить в любой момент": "You can continue at any time",
 		"ПРОДОЛЖИТЬ": "CONTINUE",
@@ -112,8 +109,7 @@ func to_english(text: String) -> String:
 		"Бомба": "Bomb",
 		"Ракета": "Rocket",
 		"Энерго-ядро": "Energy Core",
-		"Взрыв 3×3": "Blast 3×3",
-		"+3 ХОДА": "+3 MOVES"
+		"Взрыв 3×3": "Blast 3×3"
 	}
 	if exact.has(text):
 		return exact[text]
@@ -125,6 +121,8 @@ func to_english(text: String) -> String:
 		return "Unlocked: " + text.trim_prefix("Открыто: ")
 	if text.begins_with("Разбей коробки: "):
 		return "Break crates: " + text.trim_prefix("Разбей коробки: ")
+	if text.begins_with("+3 ХОДА"):
+		return text.replace("+3 ХОДА", "+3 MOVES")
 	if text.begins_with("УРОВЕНЬ "):
 		return text.replace("УРОВЕНЬ ", "LEVEL ").replace(" ОЧКОВ", " POINTS").replace("КОРОБКИ", "CRATES")
 	if text.begins_with("Очки: "):
@@ -155,6 +153,7 @@ func to_russian(text: String) -> String:
 		"BACK TO MAP": "НАЗАД К КАРТЕ",
 		"BACK TO LEVEL MAP": "НАЗАД К КАРТЕ УРОВНЕЙ",
 		"Level goals": "Цели уровня",
+		"Moves": "Ходы",
 		"PAUSE": "ПАУЗА",
 		"You can continue at any time": "Можно продолжить в любой момент",
 		"CONTINUE": "ПРОДОЛЖИТЬ",
@@ -172,8 +171,7 @@ func to_russian(text: String) -> String:
 		"Bomb": "Бомба",
 		"Rocket": "Ракета",
 		"Energy Core": "Энерго-ядро",
-		"Blast 3×3": "Взрыв 3×3",
-		"+3 MOVES": "+3 ХОДА"
+		"Blast 3×3": "Взрыв 3×3"
 	}
 	if exact.has(text):
 		return exact[text]
@@ -185,6 +183,8 @@ func to_russian(text: String) -> String:
 		return "Открыто: " + text.trim_prefix("Unlocked: ")
 	if text.begins_with("Break crates: "):
 		return "Разбей коробки: " + text.trim_prefix("Break crates: ")
+	if text.begins_with("+3 MOVES"):
+		return text.replace("+3 MOVES", "+3 ХОДА")
 	if text.begins_with("LEVEL "):
 		return text.replace("LEVEL ", "УРОВЕНЬ ").replace(" POINTS", " ОЧКОВ").replace("CRATES", "КОРОБКИ")
 	if text.begins_with("Score: "):
