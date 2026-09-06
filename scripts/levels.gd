@@ -10,7 +10,21 @@ const LEVELS := [
 	{"moves": 24, "target": 4400, "crates": 8},
 	{"moves": 23, "target": 4900, "crates": 9},
 	{"moves": 22, "target": 5500, "crates": 10},
-	{"moves": 21, "target": 6200, "crates": 12}
+	{"moves": 21, "target": 6200, "crates": 12},
+
+	# 11-17: difficulty reset so the next chapter feels fresh and fair.
+	{"moves": 28, "target": 2600, "crates": 4},
+	{"moves": 28, "target": 2900, "crates": 5},
+	{"moves": 27, "target": 3200, "crates": 5},
+	{"moves": 27, "target": 3500, "crates": 6},
+	{"moves": 26, "target": 3900, "crates": 7},
+	{"moves": 26, "target": 4300, "crates": 8},
+	{"moves": 25, "target": 4700, "crates": 9},
+
+	# 18-20: final ramp-up.
+	{"moves": 24, "target": 5600, "crates": 11},
+	{"moves": 23, "target": 6500, "crates": 13},
+	{"moves": 22, "target": 7600, "crates": 15}
 ]
 
 var game: Control
