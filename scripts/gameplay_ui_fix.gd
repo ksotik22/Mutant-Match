@@ -52,28 +52,28 @@ func build_real_goal_panel() -> void:
 
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 5)
+	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
 
 	var title := Label.new()
-	title.text = "Цель уровня"
+	title.text = "Цели уровня"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 21)
+	title.add_theme_font_size_override("font_size", 20)
 	title.add_theme_color_override("font_color", Color("663419"))
 	box.add_child(title)
 
 	score_value = Label.new()
-	score_value.text = "0"
+	score_value.text = "0 / 0"
 	score_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	score_value.add_theme_font_size_override("font_size", 32)
+	score_value.add_theme_font_size_override("font_size", 29)
 	score_value.add_theme_color_override("font_color", Color("1687dc"))
 	box.add_child(score_value)
 
 	target_value = Label.new()
-	target_value.text = "из 0 очков"
+	target_value.text = "Коробки: 0"
 	target_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	target_value.add_theme_font_size_override("font_size", 17)
-	target_value.add_theme_color_override("font_color", Color("683619"))
+	target_value.add_theme_color_override("font_color", Color("8a4d22"))
 	box.add_child(target_value)
 
 func build_working_boosters() -> void:
@@ -177,8 +177,12 @@ func _process(_delta: float) -> void:
 		return
 	var score := int(game.get("score"))
 	var target := int(game.get("target"))
+	var crates_left := 0
+	var crates = get_node_or_null("/root/Crates")
+	if crates != null:
+		crates_left = int(crates.remaining)
 	score_value.text = "%d / %d" % [score, target]
-	target_value.text = "Набери нужные очки"
+	target_value.text = "Разбей коробки: %d" % crates_left
 
 func make_panel(bg: Color, border: Color, radius: int, shadow: int) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
