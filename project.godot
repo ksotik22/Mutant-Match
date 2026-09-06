@@ -9,6 +9,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 Juice="*res://scripts/juice.gd"
+MatchSound="*res://scripts/match_sound.gd"
 ADHDFX="*res://scripts/adhd_fx.gd"
 VisualUpgrade="*res://scripts/visual_upgrade.gd"
 LayoutFix="*res://scripts/layout_fix.gd"
