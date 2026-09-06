@@ -9,6 +9,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 Economy="*res://scripts/economy.gd"
+UISync="*res://scripts/ui_sync.gd"
 Juice="*res://scripts/juice.gd"
 MatchSound="*res://scripts/match_sound.gd"
 ADHDFX="*res://scripts/adhd_fx.gd"
