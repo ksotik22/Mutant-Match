@@ -3,7 +3,6 @@ extends Node
 var game: Control
 var score_value: Label
 var target_value: Label
-var booster_counts := [3, 3, 3, 3]
 var booster_buttons: Array[Button] = []
 var paused := false
 var pause_overlay: Control
@@ -112,7 +111,7 @@ func build_working_boosters() -> void:
 
 func add_booster_button(parent: HBoxContainer, index: int, tip: String) -> void:
 	var b := Button.new()
-	b.text = "×%d" % booster_counts[index]
+	b.text = "×%d" % get_booster_count(index)
 	b.tooltip_text = tip
 	b.custom_minimum_size = Vector2(92, 72)
 	b.focus_mode = Control.FOCUS_NONE
@@ -125,6 +124,7 @@ func add_booster_button(parent: HBoxContainer, index: int, tip: String) -> void:
 	b.pressed.connect(use_booster.bind(index))
 	parent.add_child(b)
 	booster_buttons.append(b)
+	b.disabled = get_booster_count(index) <= 0
 
 func build_pause_overlay() -> void:
 	pause_overlay = Control.new()
@@ -183,14 +183,21 @@ func build_pause_overlay() -> void:
 	map_button.pressed.connect(open_level_map)
 	box.add_child(map_button)
 
+func get_booster_count(index: int) -> int:
+	var economy = get_node_or_null("/root/Economy")
+	if economy == null:
+		return 0
+	return int(economy.call("get_booster_count", index))
+
 func use_booster(index: int) -> void:
 	if game == null or paused:
 		return
-	if index < 0 or index >= booster_counts.size() or booster_counts[index] <= 0:
-		return
 	if bool(game.get("busy")):
 		return
-	booster_counts[index] -= 1
+	var economy = get_node_or_null("/root/Economy")
+	if economy == null or not bool(economy.call("use_booster", index)):
+		update_booster_text(index)
+		return
 	update_booster_text(index)
 
 	var x := randi_range(0, 7)
@@ -225,8 +232,13 @@ func instant_blast(center: Vector2i) -> void:
 
 func update_booster_text(index: int) -> void:
 	if index < booster_buttons.size():
-		booster_buttons[index].text = "×%d" % booster_counts[index]
-		booster_buttons[index].disabled = booster_counts[index] <= 0
+		var count := get_booster_count(index)
+		booster_buttons[index].text = "×%d" % count
+		booster_buttons[index].disabled = count <= 0
+
+func refresh_all_boosters() -> void:
+	for i in range(booster_buttons.size()):
+		update_booster_text(i)
 
 func toggle_pause() -> void:
 	if paused:
@@ -260,8 +272,7 @@ func resume_game() -> void:
 		game.set("busy", false)
 		if game.get("status_label") != null:
 			game.status_label.text = "Продолжаем!"
-	for i in range(booster_buttons.size()):
-		booster_buttons[i].disabled = booster_counts[i] <= 0
+	refresh_all_boosters()
 
 func open_level_map() -> void:
 	if paused:
