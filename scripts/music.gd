@@ -26,31 +26,32 @@ func _process(_delta: float) -> void:
 	if playback == null: return
 	var frames := playback.get_frames_available()
 	for i in frames:
-		var t := phase_time
-		var bar := fmod(t, 16.0)
-		var root := 220.0
+		var t: float = phase_time
+		var bar: float = fmod(t, 16.0)
+		var root: float = 220.0
 		if bar >= 4.0 and bar < 8.0: root = 174.61
 		elif bar >= 8.0 and bar < 12.0: root = 196.0
 		elif bar >= 12.0: root = 164.81
 
 		# Warm pad.
-		var pad := sin(TAU * root * t) * 0.050
+		var pad: float = sin(TAU * root * t) * 0.050
 		pad += sin(TAU * root * 1.5 * t) * 0.030
 		pad += sin(TAU * root * 2.0 * t) * 0.018
 
 		# More audible casual-game pluck rhythm.
-		var pulse_phase := fmod(t, 1.0)
-		var pluck_env := exp(-pulse_phase * 4.2)
-		var step := int(t) % 4
-		var ratio := [2.0, 2.25, 2.5, 2.25][step]
-		var pluck_note := root * ratio
-		var pluck := sin(TAU * pluck_note * t) * 0.045 * pluck_env
+		var pulse_phase: float = fmod(t, 1.0)
+		var pluck_env: float = exp(-pulse_phase * 4.2)
+		var step: int = int(t) % 4
+		var ratios: Array[float] = [2.0, 2.25, 2.5, 2.25]
+		var ratio: float = ratios[step]
+		var pluck_note: float = root * ratio
+		var pluck: float = sin(TAU * pluck_note * t) * 0.045 * pluck_env
 		pluck += sin(TAU * pluck_note * 2.0 * t) * 0.012 * pluck_env
 
 		# Light shimmer so the loop feels more energetic without becoming harsh.
-		var shimmer := sin(TAU * (root * 3.0) * t) * 0.009 * (0.5 + 0.5 * sin(TAU * 0.125 * t))
-		var bass_pulse := sin(TAU * (root * 0.5) * t) * 0.022 * exp(-fmod(t, 2.0) * 2.7)
+		var shimmer: float = sin(TAU * (root * 3.0) * t) * 0.009 * (0.5 + 0.5 * sin(TAU * 0.125 * t))
+		var bass_pulse: float = sin(TAU * (root * 0.5) * t) * 0.022 * exp(-fmod(t, 2.0) * 2.7)
 
-		var sample := clampf(pad + pluck + shimmer + bass_pulse, -0.30, 0.30)
+		var sample: float = clampf(pad + pluck + shimmer + bass_pulse, -0.30, 0.30)
 		playback.push_frame(Vector2(sample, sample))
 		phase_time += 1.0 / mix_rate
