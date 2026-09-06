@@ -20,8 +20,6 @@ const LEVELS := [
 	{"moves": 25, "target": 4700, "crates": 9},
 	{"moves": 24, "target": 5600, "crates": 11},
 	{"moves": 23, "target": 6500, "crates": 13},
-
-	# 20-27: a lighter new chapter after the difficult first campaign.
 	{"moves": 29, "target": 2500, "crates": 3},
 	{"moves": 29, "target": 2800, "crates": 4},
 	{"moves": 28, "target": 3100, "crates": 4},
@@ -30,8 +28,6 @@ const LEVELS := [
 	{"moves": 27, "target": 4050, "crates": 6},
 	{"moves": 26, "target": 4400, "crates": 6},
 	{"moves": 26, "target": 4800, "crates": 7},
-
-	# 28-30: final challenge.
 	{"moves": 24, "target": 6200, "crates": 10},
 	{"moves": 23, "target": 7300, "crates": 12},
 	{"moves": 22, "target": 8600, "crates": 14}
@@ -112,6 +108,12 @@ func _process(_delta: float) -> void:
 		game.set("busy", true)
 		show_result(false)
 
+func get_coins() -> int:
+	var economy = get_node_or_null("/root/Economy")
+	if economy == null:
+		return 0
+	return int(economy.get("coins"))
+
 func show_result(win: bool) -> void:
 	close_result()
 	result_layer = Control.new()
@@ -119,25 +121,30 @@ func show_result(win: bool) -> void:
 	result_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	result_layer.z_index = 100
 	game.add_child(result_layer)
+
 	var dim := ColorRect.new()
 	dim.color = Color(0.02, 0.08, 0.16, 0.72)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	result_layer.add_child(dim)
+
 	var card := PanelContainer.new()
-	card.position = Vector2(95, 245)
-	card.size = Vector2(530, 455)
+	card.position = Vector2(95, 205)
+	card.size = Vector2(530, 535)
 	card.add_theme_stylebox_override("panel", make_card())
 	result_layer.add_child(card)
+
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 14)
+	box.add_theme_constant_override("separation", 11)
 	card.add_child(box)
+
 	var title := Label.new()
 	title.text = "УРОВЕНЬ ПРОЙДЕН!" if win else "ХОДЫ ЗАКОНЧИЛИСЬ"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 34)
 	title.add_theme_color_override("font_color", Color("fff2c7"))
 	box.add_child(title)
+
 	var crates_left := 0
 	var crates = get_node_or_null("/root/Crates")
 	if crates != null:
@@ -145,12 +152,20 @@ func show_result(win: bool) -> void:
 	var score_label := Label.new()
 	score_label.text = "Очки: %d / %d   •   Коробки: %d" % [int(game.get("score")), int(game.get("target")), crates_left]
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	score_label.add_theme_font_size_override("font_size", 22)
+	score_label.add_theme_font_size_override("font_size", 21)
 	score_label.add_theme_color_override("font_color", Color.WHITE)
 	box.add_child(score_label)
+
+	var coins_label := Label.new()
+	coins_label.text = "МОНЕТЫ: %d" % get_coins()
+	coins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	coins_label.add_theme_font_size_override("font_size", 22)
+	coins_label.add_theme_color_override("font_color", Color("ffe05d"))
+	box.add_child(coins_label)
+
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(330, 64)
-	button.add_theme_font_size_override("font_size", 23)
+	button.custom_minimum_size = Vector2(330, 58)
+	button.add_theme_font_size_override("font_size", 22)
 	if win and current_level < LEVELS.size() - 1:
 		button.text = "СЛЕДУЮЩИЙ УРОВЕНЬ"
 		button.pressed.connect(next_level)
@@ -161,17 +176,26 @@ func show_result(win: bool) -> void:
 		button.text = "ПОВТОРИТЬ"
 		button.pressed.connect(restart_level)
 	box.add_child(button)
+
+	var shop_button := Button.new()
+	shop_button.text = "МАГАЗИН"
+	shop_button.custom_minimum_size = Vector2(330, 56)
+	shop_button.add_theme_font_size_override("font_size", 21)
+	shop_button.pressed.connect(open_shop)
+	box.add_child(shop_button)
+
 	var map_button := Button.new()
 	map_button.text = "К КАРТЕ УРОВНЕЙ"
-	map_button.custom_minimum_size = Vector2(330, 58)
-	map_button.add_theme_font_size_override("font_size", 21)
+	map_button.custom_minimum_size = Vector2(330, 56)
+	map_button.add_theme_font_size_override("font_size", 20)
 	map_button.pressed.connect(open_map)
 	box.add_child(map_button)
+
 	if win:
 		var stars := Label.new()
 		stars.text = "★ ★ ★"
 		stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		stars.add_theme_font_size_override("font_size", 38)
+		stars.add_theme_font_size_override("font_size", 35)
 		stars.add_theme_color_override("font_color", Color("ffd84f"))
 		box.add_child(stars)
 
@@ -183,6 +207,13 @@ func next_level() -> void:
 
 func restart_level() -> void:
 	start_level(current_level)
+
+func open_shop() -> void:
+	close_result()
+	var level_map = get_node_or_null("/root/LevelMap")
+	if level_map != null:
+		level_map.show_map()
+		level_map.show_shop()
 
 func open_map() -> void:
 	close_result()
@@ -209,6 +240,6 @@ func make_card() -> StyleBoxFlat:
 	s.shadow_offset = Vector2(0, 10)
 	s.content_margin_left = 30
 	s.content_margin_right = 30
-	s.content_margin_top = 28
-	s.content_margin_bottom = 28
+	s.content_margin_top = 24
+	s.content_margin_bottom = 24
 	return s
