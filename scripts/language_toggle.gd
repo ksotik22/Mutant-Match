@@ -4,6 +4,7 @@ var current_language := "ru"
 var button: Button
 var game: Control
 var refresh_timer := 0.0
+var language_layer: CanvasLayer
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -21,20 +22,28 @@ func setup() -> void:
 func add_toggle_button() -> void:
 	if game == null:
 		return
+	if language_layer != null and is_instance_valid(language_layer):
+		language_layer.queue_free()
+	language_layer = CanvasLayer.new()
+	language_layer.name = "LanguageLayer"
+	language_layer.layer = 100
+	game.add_child(language_layer)
+
 	button = Button.new()
 	button.name = "LanguageToggle"
 	button.text = "EN"
 	button.position = Vector2(620, 18)
 	button.size = Vector2(78, 48)
-	button.z_index = 1000
 	button.focus_mode = Control.FOCUS_NONE
 	button.process_mode = Node.PROCESS_MODE_ALWAYS
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.add_theme_font_size_override("font_size", 18)
 	button.add_theme_color_override("font_color", Color.WHITE)
 	button.add_theme_stylebox_override("normal", make_style(Color("175f9f"), Color("f2c76b")))
 	button.add_theme_stylebox_override("hover", make_style(Color("2076bc"), Color("fff0a0")))
+	button.add_theme_stylebox_override("pressed", make_style(Color("0f4d85"), Color.WHITE))
 	button.pressed.connect(toggle_language)
-	game.add_child(button)
+	language_layer.add_child(button)
 
 func toggle_language() -> void:
 	current_language = "en" if current_language == "ru" else "ru"
