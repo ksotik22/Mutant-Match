@@ -6,6 +6,8 @@ var target_value: Label
 var booster_counts := [3, 3, 3, 3]
 var booster_buttons: Array[Button] = []
 var paused := false
+var pause_overlay: Control
+var pause_button: Button
 
 const BOOSTER_ICONS := [
 	"res://assets/pieces/bomb.svg",
@@ -26,6 +28,7 @@ func setup() -> void:
 		return
 	build_real_goal_panel()
 	build_working_boosters()
+	build_pause_overlay()
 	rename_chaos_meter()
 
 func rename_chaos_meter() -> void:
@@ -95,16 +98,17 @@ func build_working_boosters() -> void:
 	add_booster_button(row, 2, "Ядро")
 	add_booster_button(row, 3, "Взрыв 3×3")
 
-	var pause := Button.new()
-	pause.text = "Ⅱ"
-	pause.tooltip_text = "Пауза"
-	pause.custom_minimum_size = Vector2(72, 72)
-	pause.focus_mode = Control.FOCUS_NONE
-	pause.add_theme_font_size_override("font_size", 30)
-	pause.add_theme_color_override("font_color", Color.WHITE)
-	pause.add_theme_stylebox_override("normal", make_panel(Color("1687dc"), Color("f6c96e"), 32, 4))
-	pause.pressed.connect(toggle_pause.bind(pause))
-	row.add_child(pause)
+	pause_button = Button.new()
+	pause_button.text = "Ⅱ"
+	pause_button.tooltip_text = "Пауза"
+	pause_button.custom_minimum_size = Vector2(72, 72)
+	pause_button.focus_mode = Control.FOCUS_NONE
+	pause_button.process_mode = Node.PROCESS_MODE_ALWAYS
+	pause_button.add_theme_font_size_override("font_size", 30)
+	pause_button.add_theme_color_override("font_color", Color.WHITE)
+	pause_button.add_theme_stylebox_override("normal", make_panel(Color("1687dc"), Color("f6c96e"), 32, 4))
+	pause_button.pressed.connect(toggle_pause)
+	row.add_child(pause_button)
 
 func add_booster_button(parent: HBoxContainer, index: int, tip: String) -> void:
 	var b := Button.new()
@@ -121,6 +125,63 @@ func add_booster_button(parent: HBoxContainer, index: int, tip: String) -> void:
 	b.pressed.connect(use_booster.bind(index))
 	parent.add_child(b)
 	booster_buttons.append(b)
+
+func build_pause_overlay() -> void:
+	pause_overlay = Control.new()
+	pause_overlay.name = "PauseOverlay"
+	pause_overlay.visible = false
+	pause_overlay.z_index = 220
+	pause_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	pause_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	game.add_child(pause_overlay)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.08, 0.16, 0.76)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	pause_overlay.add_child(dim)
+
+	var card := PanelContainer.new()
+	card.position = Vector2(120, 300)
+	card.size = Vector2(480, 290)
+	card.process_mode = Node.PROCESS_MODE_ALWAYS
+	card.add_theme_stylebox_override("panel", make_panel(Color("175f9f"), Color("f2c76b"), 34, 14))
+	pause_overlay.add_child(card)
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 18)
+	card.add_child(box)
+
+	var title := Label.new()
+	title.text = "ПАУЗА"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_color_override("font_color", Color("fff2c7"))
+	box.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "Можно продолжить в любой момент"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.add_theme_color_override("font_color", Color.WHITE)
+	box.add_child(subtitle)
+
+	var resume := Button.new()
+	resume.text = "ПРОДОЛЖИТЬ"
+	resume.custom_minimum_size = Vector2(300, 66)
+	resume.process_mode = Node.PROCESS_MODE_ALWAYS
+	resume.add_theme_font_size_override("font_size", 24)
+	resume.pressed.connect(resume_game)
+	box.add_child(resume)
+
+	var map_button := Button.new()
+	map_button.text = "К КАРТЕ УРОВНЕЙ"
+	map_button.custom_minimum_size = Vector2(300, 58)
+	map_button.process_mode = Node.PROCESS_MODE_ALWAYS
+	map_button.add_theme_font_size_override("font_size", 21)
+	map_button.pressed.connect(open_level_map)
+	box.add_child(map_button)
 
 func use_booster(index: int) -> void:
 	if game == null or paused:
@@ -167,10 +228,47 @@ func update_booster_text(index: int) -> void:
 		booster_buttons[index].text = "×%d" % booster_counts[index]
 		booster_buttons[index].disabled = booster_counts[index] <= 0
 
-func toggle_pause(button: Button) -> void:
-	paused = not paused
-	get_tree().paused = paused
-	button.text = "▶" if paused else "Ⅱ"
+func toggle_pause() -> void:
+	if paused:
+		resume_game()
+	else:
+		pause_game()
+
+func pause_game() -> void:
+	if paused or game == null:
+		return
+	paused = true
+	game.set("busy", true)
+	if pause_overlay != null:
+		pause_overlay.visible = true
+	if pause_button != null:
+		pause_button.text = "▶"
+	for b in booster_buttons:
+		b.disabled = true
+	if game.get("status_label") != null:
+		game.status_label.text = "ПАУЗА"
+
+func resume_game() -> void:
+	if not paused:
+		return
+	paused = false
+	if pause_overlay != null:
+		pause_overlay.visible = false
+	if pause_button != null:
+		pause_button.text = "Ⅱ"
+	if game != null:
+		game.set("busy", false)
+		if game.get("status_label") != null:
+			game.status_label.text = "Продолжаем!"
+	for i in range(booster_buttons.size()):
+		booster_buttons[i].disabled = booster_counts[i] <= 0
+
+func open_level_map() -> void:
+	if paused:
+		resume_game()
+	var level_map = get_node_or_null("/root/LevelMap")
+	if level_map != null:
+		level_map.show_map()
 
 func _process(_delta: float) -> void:
 	if game == null or score_value == null or target_value == null:
