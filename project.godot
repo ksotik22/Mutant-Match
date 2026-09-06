@@ -12,6 +12,7 @@ Juice="*res://scripts/juice.gd"
 VisualUpgrade="*res://scripts/visual_upgrade.gd"
 LayoutFix="*res://scripts/layout_fix.gd"
 Levels="*res://scripts/levels.gd"
+GameplayUIFix="*res://scripts/gameplay_ui_fix.gd"
 Music="*res://scripts/music.gd"
 
 [display]
