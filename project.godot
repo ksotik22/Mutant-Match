@@ -23,6 +23,7 @@ GameplayUIFix="*res://scripts/gameplay_ui_fix.gd"
 Music="*res://scripts/music.gd"
 StartScreen="*res://scripts/start_screen.gd"
 LanguageToggle="*res://scripts/language_toggle.gd"
+YandexSDK="*res://scripts/yandex_sdk.gd"
 
 [display]
 window/size/viewport_width=720
