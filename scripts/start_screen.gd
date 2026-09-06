@@ -101,7 +101,7 @@ func show_start() -> void:
 	box.add_child(play)
 
 	var footer := Label.new()
-	footer.text = "30 УРОВНЕЙ  •  КОРОБКИ  •  КОМБО"
+	footer.text = "50 УРОВНЕЙ  •  КОРОБКИ  •  КОМБО"
 	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	footer.add_theme_font_size_override("font_size", 17)
 	footer.add_theme_color_override("font_color", Color("d7efff"))
