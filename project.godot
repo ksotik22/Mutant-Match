@@ -14,6 +14,7 @@ VisualUpgrade="*res://scripts/visual_upgrade.gd"
 LayoutFix="*res://scripts/layout_fix.gd"
 Crates="*res://scripts/crates.gd"
 Levels="*res://scripts/levels.gd"
+LevelMap="*res://scripts/level_map.gd"
 GameplayUIFix="*res://scripts/gameplay_ui_fix.gd"
 Music="*res://scripts/music.gd"
 
