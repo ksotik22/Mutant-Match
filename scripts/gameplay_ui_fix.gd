@@ -7,7 +7,9 @@ var booster_buttons: Array[Button] = []
 var paused := false
 var pause_overlay: Control
 var pause_button: Button
+var extra_moves_button: Button
 
+const EXTRA_MOVES_PRICE := 90
 const BOOSTER_ICONS := [
 	"res://assets/pieces/bomb.svg",
 	"res://assets/pieces/rocket_h.svg",
@@ -89,7 +91,7 @@ func build_working_boosters() -> void:
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 6)
 	bar.add_child(row)
 
 	add_booster_button(row, 0, "Бомба")
@@ -97,15 +99,26 @@ func build_working_boosters() -> void:
 	add_booster_button(row, 2, "Ядро")
 	add_booster_button(row, 3, "Взрыв 3×3")
 
+	extra_moves_button = Button.new()
+	extra_moves_button.text = "+3 ХОДА\n%d" % EXTRA_MOVES_PRICE
+	extra_moves_button.tooltip_text = "Купить 3 дополнительных хода за %d монет" % EXTRA_MOVES_PRICE
+	extra_moves_button.custom_minimum_size = Vector2(90, 72)
+	extra_moves_button.focus_mode = Control.FOCUS_NONE
+	extra_moves_button.add_theme_font_size_override("font_size", 15)
+	extra_moves_button.add_theme_color_override("font_color", Color.WHITE)
+	extra_moves_button.add_theme_stylebox_override("normal", make_panel(Color("2d9c67"), Color("f6c96e"), 24, 4))
+	extra_moves_button.pressed.connect(buy_extra_moves)
+	row.add_child(extra_moves_button)
+
 	pause_button = Button.new()
 	pause_button.text = "Ⅱ"
 	pause_button.tooltip_text = "Пауза"
-	pause_button.custom_minimum_size = Vector2(72, 72)
+	pause_button.custom_minimum_size = Vector2(64, 72)
 	pause_button.focus_mode = Control.FOCUS_NONE
 	pause_button.process_mode = Node.PROCESS_MODE_ALWAYS
-	pause_button.add_theme_font_size_override("font_size", 30)
+	pause_button.add_theme_font_size_override("font_size", 28)
 	pause_button.add_theme_color_override("font_color", Color.WHITE)
-	pause_button.add_theme_stylebox_override("normal", make_panel(Color("1687dc"), Color("f6c96e"), 32, 4))
+	pause_button.add_theme_stylebox_override("normal", make_panel(Color("1687dc"), Color("f6c96e"), 28, 4))
 	pause_button.pressed.connect(toggle_pause)
 	row.add_child(pause_button)
 
@@ -113,14 +126,14 @@ func add_booster_button(parent: HBoxContainer, index: int, tip: String) -> void:
 	var b := Button.new()
 	b.text = "×%d" % get_booster_count(index)
 	b.tooltip_text = tip
-	b.custom_minimum_size = Vector2(92, 72)
+	b.custom_minimum_size = Vector2(78, 72)
 	b.focus_mode = Control.FOCUS_NONE
 	b.icon = load(BOOSTER_ICONS[index])
 	b.expand_icon = true
 	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	b.add_theme_font_size_override("font_size", 18)
+	b.add_theme_font_size_override("font_size", 17)
 	b.add_theme_color_override("font_color", Color.WHITE)
-	b.add_theme_stylebox_override("normal", make_panel(Color("1687dc"), Color("f6c96e"), 28, 4))
+	b.add_theme_stylebox_override("normal", make_panel(Color("1687dc"), Color("f6c96e"), 24, 4))
 	b.pressed.connect(use_booster.bind(index))
 	parent.add_child(b)
 	booster_buttons.append(b)
@@ -189,6 +202,31 @@ func get_booster_count(index: int) -> int:
 		return 0
 	return int(economy.call("get_booster_count", index))
 
+func get_coins() -> int:
+	var economy = get_node_or_null("/root/Economy")
+	if economy == null:
+		return 0
+	return int(economy.get("coins"))
+
+func buy_extra_moves() -> void:
+	if game == null or paused:
+		return
+	if bool(game.get("busy")):
+		return
+	var economy = get_node_or_null("/root/Economy")
+	if economy == null:
+		return
+	if not bool(economy.call("spend_coins", EXTRA_MOVES_PRICE)):
+		if game.get("status_label") != null:
+			game.status_label.text = "Не хватает монет на +3 хода"
+		refresh_extra_moves_button()
+		return
+	game.set("moves", int(game.get("moves")) + 3)
+	game.call("update_hud")
+	if game.get("status_label") != null:
+		game.status_label.text = "+3 ХОДА! Осталось монет: %d" % get_coins()
+	refresh_extra_moves_button()
+
 func use_booster(index: int) -> void:
 	if game == null or paused:
 		return
@@ -239,6 +277,13 @@ func update_booster_text(index: int) -> void:
 func refresh_all_boosters() -> void:
 	for i in range(booster_buttons.size()):
 		update_booster_text(i)
+	refresh_extra_moves_button()
+
+func refresh_extra_moves_button() -> void:
+	if extra_moves_button == null:
+		return
+	extra_moves_button.text = "+3 ХОДА\n%d" % EXTRA_MOVES_PRICE
+	extra_moves_button.disabled = paused or get_coins() < EXTRA_MOVES_PRICE
 
 func toggle_pause() -> void:
 	if paused:
@@ -257,6 +302,7 @@ func pause_game() -> void:
 		pause_button.text = "▶"
 	for b in booster_buttons:
 		b.disabled = true
+	refresh_extra_moves_button()
 	if game.get("status_label") != null:
 		game.status_label.text = "ПАУЗА"
 
@@ -292,6 +338,7 @@ func _process(_delta: float) -> void:
 		crates_left = int(crates.remaining)
 	score_value.text = "%d / %d" % [score, target]
 	target_value.text = "Разбей коробки: %d" % crates_left
+	refresh_extra_moves_button()
 
 func make_panel(bg: Color, border: Color, radius: int, shadow: int) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
