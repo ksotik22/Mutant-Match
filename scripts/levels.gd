@@ -11,8 +11,6 @@ const LEVELS := [
 	{"moves": 23, "target": 4900, "crates": 9},
 	{"moves": 22, "target": 5500, "crates": 10},
 	{"moves": 21, "target": 6200, "crates": 12},
-
-	# 11-17: difficulty reset so the next chapter feels fresh and fair.
 	{"moves": 28, "target": 2600, "crates": 4},
 	{"moves": 28, "target": 2900, "crates": 5},
 	{"moves": 27, "target": 3200, "crates": 5},
@@ -20,8 +18,6 @@ const LEVELS := [
 	{"moves": 26, "target": 3900, "crates": 7},
 	{"moves": 26, "target": 4300, "crates": 8},
 	{"moves": 25, "target": 4700, "crates": 9},
-
-	# 18-20: final ramp-up.
 	{"moves": 24, "target": 5600, "crates": 11},
 	{"moves": 23, "target": 6500, "crates": 13},
 	{"moves": 22, "target": 7600, "crates": 15}
@@ -67,21 +63,17 @@ func start_level(index: int) -> void:
 	current_level = clampi(index, 0, LEVELS.size() - 1)
 	finished = false
 	close_result()
-
 	game.call("new_game")
 	await get_tree().process_frame
-
 	var data: Dictionary = LEVELS[current_level]
 	game.set("moves", int(data["moves"]))
 	game.set("target", int(data["target"]))
 	game.set("score", 0)
 	game.set("busy", false)
 	game.call("update_hud")
-
 	var crates = get_node_or_null("/root/Crates")
 	if crates != null:
 		await crates.reset_for_level(int(data["crates"]))
-
 	info_label.text = "УРОВЕНЬ %d  •  %d ОЧКОВ  •  КОРОБКИ %d" % [current_level + 1, int(data["target"]), int(data["crates"])]
 
 func _process(_delta: float) -> void:
@@ -97,6 +89,9 @@ func _process(_delta: float) -> void:
 	if score >= target and crates_left <= 0:
 		finished = true
 		game.set("busy", true)
+		var level_map = get_node_or_null("/root/LevelMap")
+		if level_map != null:
+			level_map.complete_level(current_level)
 		show_result(true)
 	elif moves <= 0:
 		finished = true
@@ -110,30 +105,25 @@ func show_result(win: bool) -> void:
 	result_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	result_layer.z_index = 100
 	game.add_child(result_layer)
-
 	var dim := ColorRect.new()
 	dim.color = Color(0.02, 0.08, 0.16, 0.72)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	result_layer.add_child(dim)
-
 	var card := PanelContainer.new()
-	card.position = Vector2(95, 285)
-	card.size = Vector2(530, 350)
+	card.position = Vector2(95, 245)
+	card.size = Vector2(530, 455)
 	card.add_theme_stylebox_override("panel", make_card())
 	result_layer.add_child(card)
-
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 16)
+	box.add_theme_constant_override("separation", 14)
 	card.add_child(box)
-
 	var title := Label.new()
 	title.text = "УРОВЕНЬ ПРОЙДЕН!" if win else "ХОДЫ ЗАКОНЧИЛИСЬ"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 34)
 	title.add_theme_color_override("font_color", Color("fff2c7"))
 	box.add_child(title)
-
 	var crates_left := 0
 	var crates = get_node_or_null("/root/Crates")
 	if crates != null:
@@ -144,10 +134,9 @@ func show_result(win: bool) -> void:
 	score_label.add_theme_font_size_override("font_size", 22)
 	score_label.add_theme_color_override("font_color", Color.WHITE)
 	box.add_child(score_label)
-
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(310, 70)
-	button.add_theme_font_size_override("font_size", 25)
+	button.custom_minimum_size = Vector2(330, 64)
+	button.add_theme_font_size_override("font_size", 23)
 	if win and current_level < LEVELS.size() - 1:
 		button.text = "СЛЕДУЮЩИЙ УРОВЕНЬ"
 		button.pressed.connect(next_level)
@@ -158,12 +147,17 @@ func show_result(win: bool) -> void:
 		button.text = "ПОВТОРИТЬ"
 		button.pressed.connect(restart_level)
 	box.add_child(button)
-
+	var map_button := Button.new()
+	map_button.text = "К КАРТЕ УРОВНЕЙ"
+	map_button.custom_minimum_size = Vector2(330, 58)
+	map_button.add_theme_font_size_override("font_size", 21)
+	map_button.pressed.connect(open_map)
+	box.add_child(map_button)
 	if win:
 		var stars := Label.new()
 		stars.text = "★ ★ ★"
 		stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		stars.add_theme_font_size_override("font_size", 42)
+		stars.add_theme_font_size_override("font_size", 38)
 		stars.add_theme_color_override("font_color", Color("ffd84f"))
 		box.add_child(stars)
 
@@ -171,10 +165,16 @@ func next_level() -> void:
 	if current_level < LEVELS.size() - 1:
 		start_level(current_level + 1)
 	else:
-		start_level(0)
+		open_map()
 
 func restart_level() -> void:
 	start_level(current_level)
+
+func open_map() -> void:
+	close_result()
+	var level_map = get_node_or_null("/root/LevelMap")
+	if level_map != null:
+		level_map.show_map()
 
 func close_result() -> void:
 	if result_layer != null and is_instance_valid(result_layer):
