@@ -70,12 +70,28 @@ func _process(_delta: float) -> void:
 	var board = game.get("board")
 	if board == null or board.size() < 8:
 		return
-	var broken: Array[Vector2i] = []
-	for key in crate_nodes.keys():
-		var pos: Vector2i = key
-		if pos.y < board.size() and pos.x < board[pos.y].size() and int(board[pos.y][pos.x]) == -1:
-			broken.append(pos)
-	for pos in broken:
+
+	# A crate breaks when its own tile is destroyed OR when a matched/destroyed
+	# tile is directly next to it. This makes normal 3-in-a-row matches useful
+	# for clearing crates, not only bombs and rockets.
+	var destroyed: Array[Vector2i] = []
+	for y in range(8):
+		for x in range(8):
+			if int(board[y][x]) == -1:
+				destroyed.append(Vector2i(x, y))
+
+	if destroyed.is_empty():
+		return
+
+	var broken: Dictionary = {}
+	var dirs := [Vector2i.ZERO, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
+	for hit in destroyed:
+		for dir in dirs:
+			var p: Vector2i = hit + dir
+			if crate_nodes.has(p):
+				broken[p] = true
+
+	for pos in broken.keys():
 		break_crate(pos)
 
 func break_crate(pos: Vector2i) -> void:
