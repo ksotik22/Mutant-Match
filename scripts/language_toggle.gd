@@ -5,7 +5,6 @@ var button: Button
 var game: Control
 var language_layer: CanvasLayer
 var sdk_language_applied := false
-var refresh_accumulator := 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -60,18 +59,9 @@ func toggle_language() -> void:
 	current_language = "en" if current_language == "ru" else "ru"
 	apply_language()
 
-func _process(delta: float) -> void:
-	# Do not walk the entire UI tree every rendered frame. In Web builds that
-	# is expensive enough to make the Yandex Games page appear frozen.
-	refresh_accumulator += delta
-	if refresh_accumulator < 0.25:
-		return
-	refresh_accumulator = 0.0
-	if game == null:
-		game = get_tree().current_scene as Control
-	if game != null:
-		apply_language()
-
+# Important for Web/Yandex: do NOT traverse and rewrite the whole UI tree every frame
+# or on a timer. Translation is applied only when the SDK selects a language or when
+# the player presses the language button. This avoids browser main-thread stalls.
 func apply_language() -> void:
 	if game == null:
 		return
