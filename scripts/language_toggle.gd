@@ -4,6 +4,7 @@ var current_language := "ru"
 var button: Button
 var game: Control
 var language_layer: CanvasLayer
+var sdk_language_applied := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -18,6 +19,18 @@ func setup() -> void:
 		return
 	add_toggle_button()
 	apply_language()
+
+func set_language_from_sdk(lang_code: String) -> void:
+	# The game currently has Russian and English translations.
+	# Use Russian only for ru; all other Yandex Games interface languages
+	# fall back to English.
+	var normalized := lang_code.strip_edges().to_lower()
+	current_language = "ru" if normalized.begins_with("ru") else "en"
+	sdk_language_applied = true
+	if game == null:
+		game = get_tree().current_scene as Control
+	apply_language()
+	print("Mutant Match: language selected from Yandex SDK: ", normalized, " -> ", current_language)
 
 func add_toggle_button() -> void:
 	if game == null:
