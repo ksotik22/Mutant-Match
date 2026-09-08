@@ -5,6 +5,7 @@ var button: Button
 var game: Control
 var language_layer: CanvasLayer
 var sdk_language_applied := false
+var refresh_accumulator := 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -21,9 +22,6 @@ func setup() -> void:
 	apply_language()
 
 func set_language_from_sdk(lang_code: String) -> void:
-	# The game currently has Russian and English translations.
-	# Use Russian only for ru; all other Yandex Games interface languages
-	# fall back to English.
 	var normalized := lang_code.strip_edges().to_lower()
 	current_language = "ru" if normalized.begins_with("ru") else "en"
 	sdk_language_applied = true
@@ -62,7 +60,13 @@ func toggle_language() -> void:
 	current_language = "en" if current_language == "ru" else "ru"
 	apply_language()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	# Do not walk the entire UI tree every rendered frame. In Web builds that
+	# is expensive enough to make the Yandex Games page appear frozen.
+	refresh_accumulator += delta
+	if refresh_accumulator < 0.25:
+		return
+	refresh_accumulator = 0.0
 	if game == null:
 		game = get_tree().current_scene as Control
 	if game != null:
