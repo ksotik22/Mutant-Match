@@ -1,0 +1,66 @@
+name: Build Yandex Web
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fix web input blocker
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('scripts/level_map.gd')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('wash.mouse_filter = Control.MOUSE_FILTER_STOP', 'wash.mouse_filter = Control.MOUSE_FILTER_IGNORE')
+          p.write_text(s, encoding='utf-8')
+
+      - name: Download Godot 4.7
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip -O /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          chmod +x /tmp/godot/Godot_v4.7-stable_linux.x86_64
+          sudo ln -s /tmp/godot/Godot_v4.7-stable_linux.x86_64 /usr/local/bin/godot
+
+      - name: Install export templates
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_export_templates.tpz -O /tmp/templates.tpz
+          mkdir -p /tmp/templates
+          unzip -q /tmp/templates.tpz -d /tmp/templates
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.stable"
+          cp -r /tmp/templates/templates/* "$HOME/.local/share/godot/export_templates/4.7.stable/"
+
+      - name: Import project
+        run: godot --headless --editor --quit --path .
+
+      - name: Export Web
+        run: |
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
+
+      - name: Add Yandex SDK bootstrap
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('build/web/index.html')
+          s = p.read_text(encoding='utf-8')
+          injection = '''<script src="/sdk.js"></script>\n<script>\nwindow.__mutantMatchYandexLang = '';\nwindow.__mutantMatchYandexInitPromise = (async () => {\n  try {\n    const ysdk = await YaGames.init();\n    window.ysdk = ysdk;\n    const lang = ysdk?.environment?.i18n?.lang || '';\n    window.__mutantMatchYandexLang = String(lang).toLowerCase();\n    return ysdk;\n  } catch (e) {\n    console.error('Yandex SDK init failed', e);\n    return null;\n  }\n})();\n</script>\n'''
+          s = s.replace('</head>', injection + '</head>')
+          p.write_text(s, encoding='utf-8')
+
+      - name: Package ZIP
+        run: |
+          cd build/web
+          zip -r ../MutantMatch_Yandex_READY.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MutantMatch_Yandex_READY
+          path: build/MutantMatch_Yandex_READY.zip
