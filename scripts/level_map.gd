@@ -77,6 +77,7 @@ func show_map() -> void:
 	overlay = Control.new()
 	overlay.name = "LevelMap"
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.z_index = 200
 	game.add_child(overlay)
 
@@ -91,7 +92,9 @@ func show_map() -> void:
 	var wash := ColorRect.new()
 	wash.color = Color(0.02, 0.19, 0.30, 0.34)
 	wash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	wash.mouse_filter = Control.MOUSE_FILTER_STOP
+	# This is a visual tint only. STOP makes the full-screen rect consume pointer
+	# events in the Web export before they can reach the level/shop buttons.
+	wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_child(wash)
 
 	for data in [
@@ -208,6 +211,7 @@ func show_shop() -> void:
 	shop_overlay = Control.new()
 	shop_overlay.name = "ShopOverlay"
 	shop_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shop_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shop_overlay.z_index = 260
 	game.add_child(shop_overlay)
 
