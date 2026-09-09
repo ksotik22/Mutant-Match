@@ -7,6 +7,7 @@ var moves_value: Label
 var chaos_bar: ProgressBar
 var monster: TextureRect
 var last_chaos := -1
+var last_tile_signature: int = -1
 
 var colors := [Color("ff4b57"), Color("2f8dff"), Color("ffd84f"), Color("67d75b"), Color("a75be7"), Color("ff9847")]
 var piece_textures: Array[Texture2D] = []
@@ -322,7 +323,14 @@ func get_all_children(node: Node) -> Array:
 
 func _process(_delta: float) -> void:
 	if game == null or board_grid == null: return
-	upgrade_tiles()
+	var cells = game.get("cells")
+	var board = game.get("board")
+	var specials = game.get("specials")
+	if cells != null and not cells.is_empty() and not cells[0].is_empty():
+		var tile_signature := hash([board, specials, cells[0][0].get_instance_id()])
+		if tile_signature != last_tile_signature:
+			last_tile_signature = tile_signature
+			upgrade_tiles()
 	update_reference_hud()
 
 func update_reference_hud() -> void:
