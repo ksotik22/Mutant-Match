@@ -14,12 +14,42 @@ const SHOP_ICONS := [
 var game: Control
 var overlay: Control
 var shop_overlay: Control
+var map_shop_button: Button
+var map_level_buttons: Array[Button] = []
 var highest_unlocked: int = 1
 var completed_levels: Dictionary = {}
 var last_reward: int = 0
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	call_deferred("setup")
+
+# Web exports can occasionally lose Button.pressed behind a full-screen Control.
+# _input runs before GUI propagation, so use the real button rectangles as a
+# fallback for mouse and touch without changing normal button behaviour.
+func _input(event: InputEvent) -> void:
+	if overlay == null or not is_instance_valid(overlay) or shop_overlay != null:
+		return
+	var pointer_position := Vector2.ZERO
+	var released := false
+	if event is InputEventMouseButton:
+		pointer_position = event.position
+		released = event.button_index == MOUSE_BUTTON_LEFT and not event.pressed
+	elif event is InputEventScreenTouch:
+		pointer_position = event.position
+		released = not event.pressed
+	if not released:
+		return
+	if map_shop_button != null and is_instance_valid(map_shop_button) and map_shop_button.get_global_rect().has_point(pointer_position):
+		get_viewport().set_input_as_handled()
+		show_shop()
+		return
+	for i in range(map_level_buttons.size()):
+		var button := map_level_buttons[i]
+		if is_instance_valid(button) and not button.disabled and button.get_global_rect().has_point(pointer_position):
+			get_viewport().set_input_as_handled()
+			select_level(i)
+			return
 
 func setup() -> void:
 	for i in range(8):
@@ -73,6 +103,8 @@ func show_map() -> void:
 		return
 	close_shop()
 	close_map()
+	map_level_buttons.clear()
+	map_shop_button = null
 
 	overlay = Control.new()
 	overlay.name = "LevelMap"
@@ -154,6 +186,7 @@ func show_map() -> void:
 	shop_button.add_theme_stylebox_override("normal", make_level_style(Color("d98527"), Color("ffe07a")))
 	shop_button.pressed.connect(show_shop)
 	top.add_child(shop_button)
+	map_shop_button = shop_button
 
 	var subtitle := Label.new()
 	subtitle.text = "30 уровней • за победы получай монеты • покупай бустеры"
@@ -196,6 +229,7 @@ func show_map() -> void:
 		if not button.disabled:
 			button.pressed.connect(select_level.bind(i))
 		grid.add_child(button)
+		map_level_buttons.append(button)
 
 	var legend := Label.new()
 	legend.text = "1–10 ТРОПИКИ   •   11–19 ХАОС   •   20–30 НОВЫЙ ОСТРОВ"
@@ -327,6 +361,8 @@ func close_map() -> void:
 	if overlay != null and is_instance_valid(overlay):
 		overlay.queue_free()
 	overlay = null
+	map_shop_button = null
+	map_level_buttons.clear()
 
 func close_shop() -> void:
 	if shop_overlay != null and is_instance_valid(shop_overlay):
